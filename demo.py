@@ -12,10 +12,10 @@ import numpy as np
 import drawSvg as draw
 import drawings as dr
 
-export = True
+export = False
 
 src = pd.read_csv('D:/code/git/sedlog-maker/testdata.csv')
-src = src.fillna("NaN")
+src = src.fillna('NaN')
 
 gs_codes, gs_widths = dr.grainsize()
 f_codes, f_colors = dr.faciesList()

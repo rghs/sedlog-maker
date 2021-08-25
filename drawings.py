@@ -90,7 +90,9 @@ def faciesList(codes = None, colors = None):
 
 def elevs(thicknesses):
     if(hasattr(thicknesses, '__len__') is False):
-        raise Exception('Thicknesses data has no length attribute, meaning only on thickness reading was provided.')
+        ex = ('Thicknesses data has no length attribute, meaning only one thickness reading was provided.',
+              f'Provided thicknesses: {thicknesses}')
+        raise Exception(ex)
     if(isinstance(thicknesses, np.ndarray) is False):
         thicknesses = np.array(thicknesses)
     
@@ -130,7 +132,7 @@ def canvas(width = 0, height = 0, standard = 'letter'):
 
 def drawLog(elevations, grain_base, grain_top, facies, gs_codes, gs_widths,
             fcodes, fcolors, canv, orig = 30, pad = 5, lnwgt = 0.5, columns = 4,
-            vscale = 100, debug = True):
+            vscale = 100, ticks = 20, debug = True):
     # Figure out page spacing
     colheight = canv.height-(orig + pad)
     t_len = (elevations[len(elevations)-1] * 1000 * 2.8346456692913)/vscale #vscale * 2.8346456692913 * elevations[len(elevations)-1]
@@ -145,6 +147,7 @@ def drawLog(elevations, grain_base, grain_top, facies, gs_codes, gs_widths,
     
     # Draw scale
     d = canv
+    nticks = elevations[len(elevations)-1]
     for j in range(0,cols):
         for i in range(0,len(gs_codes)):
             x = (j * 30) + orig + (j * gs_widths[len(gs_widths)-1]) + gs_widths[i]
@@ -177,7 +180,7 @@ def drawLog(elevations, grain_base, grain_top, facies, gs_codes, gs_widths,
     elevations = (elevations * 1000 * 2.8346456692913)/vscale
     for i in range(0,len(elevations)-1):
         if(elevations[i] > (j+1)*colheight):
-            print('bugger')
+            if debug is True: print('Split unit.')
             j += 1
         x1 = (j * 30) + orig + (j * gs_widths[len(gs_widths)-1])
         x2 = x1 + gs_widths[gs_codes[gs_codes == grain_base[i]].index[0]]
@@ -237,10 +240,10 @@ def drawLog(elevations, grain_base, grain_top, facies, gs_codes, gs_widths,
                                 fill = fcolors[fcodes[fcodes == facies[i]].index[0]],
                                 stroke = 'black',
                                 stroke_width = lnwgt))
-
-        print(f'{j},{i},({x1:.3f},{y1:.3f}), ({x2:.3f},{y1:.3f}), ({x3:.3f},{y2:.3f}), ({x1:.3f},{y2:.3f}), {((colheight+orig) - y2):.3f}')
+        if debug is True:
+            print(f'{j},{i},({x1:.3f},{y1:.3f}), ({x2:.3f},{y1:.3f}), ({x3:.3f},{y2:.3f}), ({x1:.3f},{y2:.3f}), {((colheight+orig) - y2):.3f}')
     
-    if debug == True:
+    if debug is True:
         print(f't_len: {t_len}',
               f'avail_len: {max(avail_len)}',
               f'cols: {cols}',
