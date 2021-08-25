@@ -12,6 +12,12 @@ import numpy as np
 import drawSvg as draw
 import warnings
 
+def greater(x,y):
+    if(x>y):
+        return x
+    else:
+        return y
+
 def grainsize(sizes = None, width = None, wunit = 'mm'):
     if(wunit not in  ['mm','in','pt']):
         raise Exception('Width unit must be either "mm","in" or "pt".')
@@ -22,7 +28,7 @@ def grainsize(sizes = None, width = None, wunit = 'mm'):
                           "cl","si",
                           "vf","f","m","c","vc",
                           "gr","pebb","cobb","boul"))
-        widths = np.array((0.0,
+        widths = np.array((0.1,
                           0.2, 0.3,
                           0.4, 0.45, 0.5, 0.55, 0.6,
                           0.7, 0.8, 0.9, 1.0))
@@ -122,8 +128,9 @@ def canvas(width = 0, height = 0, standard = 'letter'):
     
     return canvas
 
-def drawLog(elevations, grain_base, grain_top, gs_codes, gs_widths,
-            fcodes, fcolors, canv, orig = 30, pad = 5, columns = 4, vscale = 10, debug = True):
+def drawLog(elevations, grain_base, grain_top, facies, gs_codes, gs_widths,
+            fcodes, fcolors, canv, orig = 30, pad = 5, lnwgt = 0.5, columns = 4,
+            vscale = 100, debug = True):
     # Figure out page spacing
     colheight = canv.height-(orig + pad)
     t_len = (elevations[len(elevations)-1] * 1000 * 2.8346456692913)/vscale #vscale * 2.8346456692913 * elevations[len(elevations)-1]
@@ -161,7 +168,7 @@ def drawLog(elevations, grain_base, grain_top, gs_codes, gs_widths,
         x = (j * 30) + orig + (j * gs_widths[len(gs_widths)-1]) + gs_widths[len(gs_widths)-1]
         d.append(draw.Lines(x,orig,
                             x-gs_widths[len(gs_widths)-1],orig,
-                            x-gs_widths[len(gs_widths)-1],colheight,
+                            x-gs_widths[len(gs_widths)-1],colheight + orig,
                             fill = 'none',
                             stroke = 'black',
                             stroke_width = 0.5))
@@ -178,10 +185,60 @@ def drawLog(elevations, grain_base, grain_top, gs_codes, gs_widths,
             x3 = x1 + gs_widths[gs_codes[gs_codes == grain_top[i]].index[0]]
         else:
             x3 = x2
-        y1 = elevations[i] - (j * colheight)
-        y2 = elevations[i+1] - (j * colheight)
+        y1 = elevations[i] - (j * colheight) + orig
+        y2 = elevations[i+1] - (j * colheight) + orig
+        
+        if(y2 > (colheight+orig)):
+            clip = draw.ClipPath()
+            clip.append(draw.Lines(x1, y1,
+                                   greater(x2,x3), y1,
+                                   greater(x2,x3), y2 + ((colheight+orig) - y2),
+                                   x1, y2 + ((colheight+orig) - y2)))
+            d.append(draw.Lines(x1, y1,
+                                x2, y1,
+                                x3, y2,
+                                x1, y2,
+                                close = True,
+                                fill = fcolors[fcodes[fcodes == facies[i]].index[0]],
+                                stroke = 'black',
+                                stroke_width = lnwgt,
+                                clip_path = clip))
+            
+            x1b = ((j+1) * 30) + orig + ((j+1) * gs_widths[len(gs_widths)-1])
+            x2b = x1b + gs_widths[gs_codes[gs_codes == grain_base[i]].index[0]]
+            if(grain_top[i] != 'NaN'):
+                x3b = x1b + gs_widths[gs_codes[gs_codes == grain_top[i]].index[0]]
+            else:
+                x3b = x2b
+            y1b = elevations[i] - ((j+1) * colheight) + orig
+            y2b = elevations[i+1] - ((j+1) * colheight) + orig
+            
+            clip = draw.ClipPath()
+            clip.append(draw.Lines(x1b, orig,
+                                   greater(x2b,x3b), orig,
+                                   greater(x2b,x3b), y2b,
+                                   x1b, y2b))
+            d.append(draw.Lines(x1b, y1b,
+                                x2b, y1b,
+                                x3b, y2b,
+                                x1b, y2b,
+                                close = True,
+                                fill = fcolors[fcodes[fcodes == facies[i]].index[0]],
+                                stroke = 'black',
+                                stroke_width = lnwgt,
+                                clip_path = clip))
+            
+        else:
+            d.append(draw.Lines(x1, y1,
+                                x2, y1,
+                                x3, y2,
+                                x1, y2,
+                                close = True,
+                                fill = fcolors[fcodes[fcodes == facies[i]].index[0]],
+                                stroke = 'black',
+                                stroke_width = lnwgt))
 
-        print(f'{j},{i},({x1},{y1}), ({x2},{y1}), ({x3},{y2}), ({x1},{y2})')
+        print(f'{j},{i},({x1:.3f},{y1:.3f}), ({x2:.3f},{y1:.3f}), ({x3:.3f},{y2:.3f}), ({x1:.3f},{y2:.3f}), {((colheight+orig) - y2):.3f}')
     
     if debug == True:
         print(f't_len: {t_len}',
