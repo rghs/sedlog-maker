@@ -12,7 +12,7 @@ import numpy as np
 import drawSvg as draw
 import drawings as dr
 
-export = False
+export = True
 
 src = pd.read_csv('D:/code/git/sedlog-maker/testdata.csv')
 src = src.fillna('NaN')
@@ -24,7 +24,7 @@ can = dr.canvas()
 
 x = dr.drawLog(el, src.gs_base, src.gs_top, src.code,
                gs_codes, gs_widths,
-               f_codes, f_colors, can,
+               f_codes, f_colors, can, ticks = 10, man_colheight = 100, columns = 6,
                vscale = 500, debug = False)
 
 if export is True:

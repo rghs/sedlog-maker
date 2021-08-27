@@ -11,14 +11,41 @@ import pandas as pd
 import numpy as np
 import drawSvg as draw
 import warnings
+import math
 
 def greater(x,y):
+    '''
+    Returns greater of two numbers entered. Accepts floats and ints.
+
+    '''
     if(x>y):
         return x
     else:
         return y
 
 def grainsize(sizes = None, width = None, wunit = 'mm'):
+    '''
+    Converts grainsize inputs to values accepted by drawLog. If left as default,
+    will generate a standard lookup for siliciclastic grainsizes and graphical
+    widths.
+
+    Parameters
+    ----------
+    sizes : arraylike, optional
+        Array containing custom codes for grain size. The default is None.
+    width : arraylike, optional
+        Array containing custom widths for grain sizes. The default is None.
+    wunit : str, optional
+        String specifying width unit provided in width variable. Must be either 'mm','in' or 'pt'. The default is 'mm'.
+
+    Returns
+    -------
+    grain : pandas Series
+        Series containing codes for grain sizes.
+    widths : pandas Series
+        Series containing widths for grain sizes in pt.
+
+    '''
     if(wunit not in  ['mm','in','pt']):
         raise Exception('Width unit must be either "mm","in" or "pt".')
     if((sizes is None) and (width is not None)) or ((sizes is not None) and (width is None)):
@@ -58,6 +85,29 @@ def grainsize(sizes = None, width = None, wunit = 'mm'):
     return grain, widths
 
 def faciesList(codes = None, colors = None):
+    '''
+    Converts provided facies and colors to values accepted by drawLog.
+
+    Parameters
+    ----------
+    codes : TYPE, optional
+        DESCRIPTION. The default is None.
+    colors : TYPE, optional
+        DESCRIPTION. The default is None.
+
+    Raises
+    ------
+    Exception
+        DESCRIPTION.
+
+    Returns
+    -------
+    fcodes : TYPE
+        DESCRIPTION.
+    fcolors : TYPE
+        DESCRIPTION.
+
+    '''
     if((codes is None) and (colors is not None)) or ((codes is not None) and (colors is None)):
         raise Exception('Both codes and colors must be provided if custom categories are being used.')
     elif(codes is None and colors is None):
@@ -90,8 +140,8 @@ def faciesList(codes = None, colors = None):
 
 def elevs(thicknesses):
     if(hasattr(thicknesses, '__len__') is False):
-        ex = ('Thicknesses data has no length attribute, meaning only one thickness reading was provided.',
-              f'Provided thicknesses: {thicknesses}')
+        ex = '\n'.join(('Thicknesses data has no length attribute, meaning only one thickness reading was provided.',
+              f'Provided thicknesses: {thicknesses}'))
         raise Exception(ex)
     if(isinstance(thicknesses, np.ndarray) is False):
         thicknesses = np.array(thicknesses)
@@ -131,26 +181,58 @@ def canvas(width = 0, height = 0, standard = 'letter'):
     return canvas
 
 def drawLog(elevations, grain_base, grain_top, facies, gs_codes, gs_widths,
-            fcodes, fcolors, canv, orig = 30, pad = 5, lnwgt = 0.5, columns = 4,
-            vscale = 100, ticks = 20, debug = True):
+            fcodes, fcolors, canv, man_colheight = False, orig = 30, pad = 5,
+            lnwgt = 0.5, columns = 4, colspc = 30, vscale = 100, ticks = 20, debug = False):
     # Figure out page spacing
-    colheight = canv.height-(orig + pad)
+    if man_colheight is False:
+        colheight = canv.height-(orig + pad)
+    elif(isinstance(man_colheight, int) or isinstance(man_colheight, float)):
+        colheight = (man_colheight * 1000 * 2.8346456692913)/vscale
+        if(colheight > canv.height-(orig + pad)):
+            err = '\n'.join(('Column height exceeds page height.',
+                   f'Current page height (pt) = {canv.height-(orig + pad)}',
+                   f'Current column height (pt) = {(man_colheight * 1000 * 2.8346456692913)/vscale}',
+                   f'Current excess height (pt) = {((man_colheight * 1000 * 2.8346456692913)/vscale) - (canv.height-(orig + pad))}'))
+            raise Exception(err)
+    else:
+        raise Exception('Manual column height must be provided as "int" or "float" dtype.')
+        
     t_len = (elevations[len(elevations)-1] * 1000 * 2.8346456692913)/vscale #vscale * 2.8346456692913 * elevations[len(elevations)-1]
     avail_len = pd.Series(np.array(list(range(1,columns + 1))) * colheight)
     if(pd.isna(avail_len[avail_len>t_len].index.min()) is True):
-        error = (f'Not sufficient vertical space with {columns} columns and vertical scale of {vscale}:1.',
+        error = '\n'.join((f'Not sufficient vertical space with {columns} columns and vertical scale of {vscale}:1.',
                         'Choose a smaller vscale or increase max columns.',
-                        f'Available length: {max(avail_len)}, total length of column: {t_len}')
+                        f'Available length (pt) = {max(avail_len)}',
+                        f'Total length of column (pt) = {t_len}',
+                        f'Individual column height (pt) = {colheight}',
+                        f'Excess height (pt) = {t_len - max(avail_len)}'))
         raise Exception(error)
     else:
         cols = avail_len[avail_len>t_len].index.min() + 1
     
     # Draw scale
     d = canv
-    nticks = elevations[len(elevations)-1]
+    nticks = math.floor(max(avail_len)/((ticks * 1000 * 2.8346456692913)/vscale) + 1)
+    t_heights = np.array(range(0,nticks)) * ((ticks * 1000 * 2.8346456692913)/vscale)
+    
+    j = 0
+    x = orig
+    for i in range(0,nticks):
+        if(t_heights[i] >= (j+1)*colheight):
+            j += 1
+            x = (j * colspc) + orig + (j * gs_widths[len(gs_widths)-1])
+        d.append(draw.Lines(x, orig + t_heights[i] - (j*colheight),
+                            x - 5, orig + t_heights[i] - (j*colheight),
+                            fill = 'none',
+                            stroke = 'black',
+                            stroke_width = 0.5))
+        d.append(draw.Text(f'{i * ticks}', 9,
+                           x - 6, orig + t_heights[i] - (j*colheight),
+                           text_anchor = 'end'))
+    
     for j in range(0,cols):
         for i in range(0,len(gs_codes)):
-            x = (j * 30) + orig + (j * gs_widths[len(gs_widths)-1]) + gs_widths[i]
+            x = (j * colspc) + orig + (j * gs_widths[len(gs_widths)-1]) + gs_widths[i]
             if(i % 2 == 1):
                 d.append(draw.Lines(x, orig,
                                     x, orig - 15,
@@ -158,7 +240,8 @@ def drawLog(elevations, grain_base, grain_top, facies, gs_codes, gs_widths,
                                     stroke = 'black',
                                     stroke_width = 0.5))
                 d.append(draw.Text(f'{gs_codes[i]}', 9,
-                                   x, orig - 20))
+                                   x, orig - 20,
+                                   text_anchor = 'center'))
             else:
                d.append(draw.Lines(x, orig,
                                    x, orig - 5,
@@ -166,9 +249,10 @@ def drawLog(elevations, grain_base, grain_top, facies, gs_codes, gs_widths,
                                    stroke = 'black',
                                    stroke_width = 0.5))
                d.append(draw.Text(f'{gs_codes[i]}', 9,
-                                  x, orig-10))
+                                  x, orig-10,
+                                  text_anchor = 'center'))
         
-        x = (j * 30) + orig + (j * gs_widths[len(gs_widths)-1]) + gs_widths[len(gs_widths)-1]
+        x = (j * colspc) + orig + (j * gs_widths[len(gs_widths)-1]) + gs_widths[len(gs_widths)-1]
         d.append(draw.Lines(x,orig,
                             x-gs_widths[len(gs_widths)-1],orig,
                             x-gs_widths[len(gs_widths)-1],colheight + orig,
@@ -182,7 +266,7 @@ def drawLog(elevations, grain_base, grain_top, facies, gs_codes, gs_widths,
         if(elevations[i] > (j+1)*colheight):
             if debug is True: print('Split unit.')
             j += 1
-        x1 = (j * 30) + orig + (j * gs_widths[len(gs_widths)-1])
+        x1 = (j * colspc) + orig + (j * gs_widths[len(gs_widths)-1])
         x2 = x1 + gs_widths[gs_codes[gs_codes == grain_base[i]].index[0]]
         if(grain_top[i] != 'NaN'):
             x3 = x1 + gs_widths[gs_codes[gs_codes == grain_top[i]].index[0]]
@@ -207,7 +291,7 @@ def drawLog(elevations, grain_base, grain_top, facies, gs_codes, gs_widths,
                                 stroke_width = lnwgt,
                                 clip_path = clip))
             
-            x1b = ((j+1) * 30) + orig + ((j+1) * gs_widths[len(gs_widths)-1])
+            x1b = ((j+1) * colspc) + orig + ((j+1) * gs_widths[len(gs_widths)-1])
             x2b = x1b + gs_widths[gs_codes[gs_codes == grain_base[i]].index[0]]
             if(grain_top[i] != 'NaN'):
                 x3b = x1b + gs_widths[gs_codes[gs_codes == grain_top[i]].index[0]]
