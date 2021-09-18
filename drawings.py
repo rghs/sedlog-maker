@@ -4,7 +4,7 @@ Created on Wed Aug 11 11:54:34 2021
 
 @author: RGHS
 
-Subordinate functions for sed log maker
+Functions for sed log maker
 """
 
 import pandas as pd
@@ -90,22 +90,17 @@ def faciesList(codes = None, colors = None):
 
     Parameters
     ----------
-    codes : TYPE, optional
-        DESCRIPTION. The default is None.
-    colors : TYPE, optional
-        DESCRIPTION. The default is None.
-
-    Raises
-    ------
-    Exception
-        DESCRIPTION.
+    codes : array-like, optional
+        Contains facies codes as strings you want to use.
+    colors : array-like, optional
+        Contains hex. The default is None.
 
     Returns
     -------
-    fcodes : TYPE
-        DESCRIPTION.
-    fcolors : TYPE
-        DESCRIPTION.
+    fcodes : np.ndarray
+        Array containing codes used for facies.
+    fcolors : np.ndarray
+        Array containing hex codes for facies colors.
 
     '''
     if((codes is None) and (colors is not None)) or ((codes is not None) and (colors is None)):
@@ -142,7 +137,7 @@ def elevs(thicknesses):
     if(hasattr(thicknesses, '__len__') is False):
         ex = '\n'.join(('Thicknesses data has no length attribute, meaning only one thickness reading was provided.',
               f'Provided thicknesses: {thicknesses}'))
-        raise Exception(ex)
+        warnings.warn(ex)
     if(isinstance(thicknesses, np.ndarray) is False):
         thicknesses = np.array(thicknesses)
     
@@ -180,85 +175,46 @@ def canvas(width = 0, height = 0, standard = 'letter'):
     
     return canvas
 
-def drawLog(elevations, grain_base, grain_top, facies, gs_codes, gs_widths,
-            fcodes, fcolors, canv, man_colheight = False, orig = 30, pad = 5,
-            lnwgt = 0.5, columns = 4, colspc = 30, vscale = 100, ticks = 20, debug = False):
+def drawLog(elevations, vscale,
+            grain_base, grain_top, facies,
+            gs_codes, gs_widths, fcodes, fcolors, canv,
+            orig = 30, pad = 5, colspc = 30, lnwgt = 0.5,
+            man_colheight = False, columns = False, ticks = 20, labels = None,
+            debug = False):
     # Figure out page spacing
     if man_colheight is False:
         colheight = canv.height-(orig + pad)
     elif(isinstance(man_colheight, int) or isinstance(man_colheight, float)):
         colheight = (man_colheight * 1000 * 2.8346456692913)/vscale
         if(colheight > canv.height-(orig + pad)):
-            err = '\n'.join(('Column height exceeds page height.',
-                   f'Current page height (pt) = {canv.height-(orig + pad)}',
-                   f'Current column height (pt) = {(man_colheight * 1000 * 2.8346456692913)/vscale}',
-                   f'Current excess height (pt) = {((man_colheight * 1000 * 2.8346456692913)/vscale) - (canv.height-(orig + pad))}'))
-            raise Exception(err)
+            err = '\n'.join(('Column height exceeds page height. Produced log will hang off page.',
+                             f'Current page height (pt) = {canv.height-(orig + pad)}',
+                             f'Current column height (pt) = {(man_colheight * 1000 * 2.8346456692913)/vscale}',
+                             f'Current excess height (pt) = {((man_colheight * 1000 * 2.8346456692913)/vscale) - (canv.height-(orig + pad))}'))
+            warnings.warn(err)
     else:
         raise Exception('Manual column height must be provided as "int" or "float" dtype.')
-        
+    
     t_len = (elevations[len(elevations)-1] * 1000 * 2.8346456692913)/vscale #vscale * 2.8346456692913 * elevations[len(elevations)-1]
+    if(columns is False):
+        # Calculate the minimum number of columns needed to fit log if no value is passed
+        columns = math.ceil(t_len/colheight)
     avail_len = pd.Series(np.array(list(range(1,columns + 1))) * colheight)
     if(pd.isna(avail_len[avail_len>t_len].index.min()) is True):
         error = '\n'.join((f'Not sufficient vertical space with {columns} columns and vertical scale of {vscale}:1.',
                         'Choose a smaller vscale or increase max columns.',
                         f'Available length (pt) = {max(avail_len)}',
-                        f'Total length of column (pt) = {t_len}',
+                        f'Total length of log (pt) = {t_len}',
                         f'Individual column height (pt) = {colheight}',
-                        f'Excess height (pt) = {t_len - max(avail_len)}'))
+                        f'Excess height (pt) = {t_len - max(avail_len)}',
+                        f'Minimum columns needed = {math.ceil(t_len/colheight)}'))
         raise Exception(error)
     else:
+        # Reduce provided number of columns to minimum needed
         cols = avail_len[avail_len>t_len].index.min() + 1
     
-    # Draw scale
     d = canv
-    nticks = math.floor(max(avail_len)/((ticks * 1000 * 2.8346456692913)/vscale) + 1)
-    t_heights = np.array(range(0,nticks)) * ((ticks * 1000 * 2.8346456692913)/vscale)
     
-    j = 0
-    x = orig
-    for i in range(0,nticks):
-        if(t_heights[i] >= (j+1)*colheight):
-            j += 1
-            x = (j * colspc) + orig + (j * gs_widths[len(gs_widths)-1])
-        d.append(draw.Lines(x, orig + t_heights[i] - (j*colheight),
-                            x - 5, orig + t_heights[i] - (j*colheight),
-                            fill = 'none',
-                            stroke = 'black',
-                            stroke_width = 0.5))
-        d.append(draw.Text(f'{i * ticks}', 9,
-                           x - 6, orig + t_heights[i] - (j*colheight),
-                           text_anchor = 'end'))
-    
-    for j in range(0,cols):
-        for i in range(0,len(gs_codes)):
-            x = (j * colspc) + orig + (j * gs_widths[len(gs_widths)-1]) + gs_widths[i]
-            if(i % 2 == 1):
-                d.append(draw.Lines(x, orig,
-                                    x, orig - 15,
-                                    fill = 'none',
-                                    stroke = 'black',
-                                    stroke_width = 0.5))
-                d.append(draw.Text(f'{gs_codes[i]}', 9,
-                                   x, orig - 20,
-                                   text_anchor = 'center'))
-            else:
-               d.append(draw.Lines(x, orig,
-                                   x, orig - 5,
-                                   fill = 'none',
-                                   stroke = 'black',
-                                   stroke_width = 0.5))
-               d.append(draw.Text(f'{gs_codes[i]}', 9,
-                                  x, orig-10,
-                                  text_anchor = 'center'))
-        
-        x = (j * colspc) + orig + (j * gs_widths[len(gs_widths)-1]) + gs_widths[len(gs_widths)-1]
-        d.append(draw.Lines(x,orig,
-                            x-gs_widths[len(gs_widths)-1],orig,
-                            x-gs_widths[len(gs_widths)-1],colheight + orig,
-                            fill = 'none',
-                            stroke = 'black',
-                            stroke_width = 0.5))
     # Draw log
     j = 0
     elevations = (elevations * 1000 * 2.8346456692913)/vscale
@@ -326,6 +282,55 @@ def drawLog(elevations, grain_base, grain_top, facies, gs_codes, gs_widths,
                                 stroke_width = lnwgt))
         if debug is True:
             print(f'{j},{i},({x1:.3f},{y1:.3f}), ({x2:.3f},{y1:.3f}), ({x3:.3f},{y2:.3f}), ({x1:.3f},{y2:.3f}), {((colheight+orig) - y2):.3f}')
+        
+    # Draw scale
+    nticks = math.floor((cols * colheight)/((ticks * 1000 * 2.8346456692913)/vscale) + 1)
+    t_heights = np.array(range(0,nticks)) * ((ticks * 1000 * 2.8346456692913)/vscale)
+    
+    j = 0
+    x = orig
+    for i in range(0,nticks):
+        if(t_heights[i] >= (j+1)*colheight):
+            j += 1
+            x = (j * colspc) + orig + (j * gs_widths[len(gs_widths)-1])
+        d.append(draw.Lines(x, orig + t_heights[i] - (j*colheight),
+                            x - 5, orig + t_heights[i] - (j*colheight),
+                            fill = 'none',
+                            stroke = 'black',
+                            stroke_width = 0.5))
+        d.append(draw.Text(f'{i * ticks}', 9,
+                           x - 6, orig + t_heights[i] - (j*colheight),
+                           text_anchor = 'end'))
+    
+    for j in range(0,cols):
+        for i in range(0,len(gs_codes)):
+            x = (j * colspc) + orig + (j * gs_widths[len(gs_widths)-1]) + gs_widths[i]
+            if(i % 2 == 1):
+                d.append(draw.Lines(x, orig,
+                                    x, orig - 15,
+                                    fill = 'none',
+                                    stroke = 'black',
+                                    stroke_width = 0.5))
+                d.append(draw.Text(f'{gs_codes[i]}', 9,
+                                   x, orig - 20,
+                                   text_anchor = 'center'))
+            else:
+               d.append(draw.Lines(x, orig,
+                                   x, orig - 5,
+                                   fill = 'none',
+                                   stroke = 'black',
+                                   stroke_width = 0.5))
+               d.append(draw.Text(f'{gs_codes[i]}', 9,
+                                  x, orig-10,
+                                  text_anchor = 'center'))
+        
+        x = (j * colspc) + orig + (j * gs_widths[len(gs_widths)-1]) + gs_widths[len(gs_widths)-1]
+        d.append(draw.Lines(x,orig,
+                            x-gs_widths[len(gs_widths)-1],orig,
+                            x-gs_widths[len(gs_widths)-1],colheight + orig,
+                            fill = 'none',
+                            stroke = 'black',
+                            stroke_width = 0.5))
     
     if debug is True:
         print(f't_len: {t_len}',

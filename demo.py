@@ -22,10 +22,12 @@ f_codes, f_colors = dr.faciesList()
 el = dr.elevs(src.thickness)
 can = dr.canvas()
 
-x = dr.drawLog(el, src.gs_base, src.gs_top, src.code,
+x = dr.drawLog(el, 500, src.gs_base, src.gs_top, src.code,
                gs_codes, gs_widths,
-               f_codes, f_colors, can, ticks = 10, man_colheight = 100, columns = 6,
-               vscale = 500, debug = False)
+               f_codes, f_colors, can, ticks = 10,
+               man_colheight = 120, 
+               columns = 325,
+               debug = False)
 
 if export is True:
     x.saveSvg('D:/code/git/sedlog-maker/test.svg')
