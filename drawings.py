@@ -113,11 +113,11 @@ def faciesList(codes = None, colors = None):
                            "gmm","gmmi",
                            "gcm","gcmi","gcp","gct","gch"))
         fcolors = np.array(("#FFFFFF","#FFFFFF",
-                            "#723F94","#723F94","#723F94","#723F94","#723F94",
-                            "#7E6B71","#7E6B71","#7E6B71","#7E6B71","#7E6B71",
-                            "#FED54A","#FED54A","#FED54A","#FED54A","#FED54A","#FED54A","#FED54A",
-                            "#FEC77C","#FEC77C",
-                            "#C9AC68","#C9AC68","#C9AC68","#C9AC68","#C9AC68"))
+                            "#5A4854","#74576A","#8C627E","#A57093","#D998C1",
+                            "#666154","#807969","#99917D","#B3A993","#CCC1A7",
+                            "#E3AB4A","#DBB75C","#FDBB45","#FBB672","#FFCE6F","#EE9621","#F68C35",
+                            "#99834F","#E5C376",
+                            "#661714","#8D211D","#B22C26","#D93328","#EF4130"))
     elif((hasattr(codes, '__len__') is False) or (hasattr(colors, '__len__') is False)):
         warnings.warn('Either codes or colors has no length attribute. This means that you have provided only one category in either. This is likely to produce very strange behaviour and should be reconsidered.')
     else:
@@ -178,11 +178,12 @@ def canvas(width = 0, height = 0, standard = 'letter'):
 def drawLog(elevations, vscale,
             grain_base, grain_top, facies,
             gs_codes, gs_widths, fcodes, fcolors, canv,
-            orig = 30, pad = 5, colspc = 30, lnwgt = 0.5,
-            man_colheight = False, columns = False, ticks = 20, labels = None,
+            orig = 40, pad = 5, colspc = 40, lnwgt = 0.5,
+            man_colheight = None, columns = None, ticks = 20,
+            labels = None, label_strat = 'polite',
             debug = False):
     # Figure out page spacing
-    if man_colheight is False:
+    if man_colheight is None:
         colheight = canv.height-(orig + pad)
     elif(isinstance(man_colheight, int) or isinstance(man_colheight, float)):
         colheight = (man_colheight * 1000 * 2.8346456692913)/vscale
@@ -196,7 +197,7 @@ def drawLog(elevations, vscale,
         raise Exception('Manual column height must be provided as "int" or "float" dtype.')
     
     t_len = (elevations[len(elevations)-1] * 1000 * 2.8346456692913)/vscale #vscale * 2.8346456692913 * elevations[len(elevations)-1]
-    if(columns is False):
+    if(columns is None):
         # Calculate the minimum number of columns needed to fit log if no value is passed
         columns = math.ceil(t_len/colheight)
     avail_len = pd.Series(np.array(list(range(1,columns + 1))) * colheight)
@@ -231,6 +232,7 @@ def drawLog(elevations, vscale,
         y1 = elevations[i] - (j * colheight) + orig
         y2 = elevations[i+1] - (j * colheight) + orig
         
+        # Draw boxes split across 2 columns
         if(y2 > (colheight+orig)):
             clip = draw.ClipPath()
             clip.append(draw.Lines(x1, y1,
@@ -270,7 +272,46 @@ def drawLog(elevations, vscale,
                                 stroke = 'black',
                                 stroke_width = lnwgt,
                                 clip_path = clip))
+            # Draw labels on whichever section is biggest
+            if(labels == 'facies') or (labels == 'numbers'):
+                if(((y2 + ((colheight+orig) - y2)) - y1) > y2b-orig):
+                    lx = greater(x2, x3) + 5
+                    ly = (y1 + (y2 + ((colheight+orig) - y2)))/2
+                    ldelta = (y2 + ((colheight+orig) - y2)) - y1
+                else:
+                    lx = greater(x2b, x3b) + 5
+                    ly = (y2b+(orig))/2
+                    ldelta = y2b - orig
+            # Draw labels on complete boxes
+            if(label_strat == 'polite'):
+                if((labels == 'facies') and (ldelta >= 9)):
+                    p = draw.Line(lx, ly,
+                                  lx+100, ly,
+                                  stroke_width = 0, fill = 'none')
+                    d.append(draw.Text(f'{facies[i]}', 9,
+                                       path = p, valign='middle', text_anchor = 'start'))
+                elif((labels == 'numbers') and (ldelta >= 9)):
+                    p = draw.Line(lx, ly,
+                                  lx+100, ly,
+                                  stroke_width = 0, fill = 'none')
+                    d.append(draw.Text(f'{i}', 9,
+                                       path = p, valign='middle', text_anchor = 'start'))
+            # Just label everything
+            else:
+                if(labels == 'facies'):
+                    p = draw.Line(greater(x2,x3)+5, (y2+y1)/2,
+                                  greater(x2,x3)+100, (y2+y1)/2,
+                                  stroke_width = 0, fill = 'none')
+                    d.append(draw.Text(f'{facies[i]}', 9,
+                                       path = p, valign='middle', text_anchor = 'start'))
+                elif(labels == 'numbers'):
+                    p = draw.Line(greater(x2,x3)+5, (y2+y1)/2,
+                                  greater(x2,x3)+100, (y2+y1)/2,
+                                  stroke_width = 0, fill = 'none')
+                    d.append(draw.Text(f'{i}', 9,
+                                       path = p, valign='middle', text_anchor = 'start'))
             
+        # Draw boxes that aren't split
         else:
             d.append(draw.Lines(x1, y1,
                                 x2, y1,
@@ -280,6 +321,37 @@ def drawLog(elevations, vscale,
                                 fill = fcolors[fcodes[fcodes == facies[i]].index[0]],
                                 stroke = 'black',
                                 stroke_width = lnwgt))
+            
+            # Label units
+            # Make labels appear only on units that are thick enough
+            if(label_strat == 'polite'):
+                if((labels == 'facies') and ((y2 - y1) >= 9)):
+                    p = draw.Line(greater(x2,x3)+5, (y2+y1)/2,
+                                  greater(x2,x3)+100, (y2+y1)/2,
+                                  stroke_width = 0, fill = 'none')
+                    d.append(draw.Text(f'{facies[i]}', 9,
+                                       path = p, valign='middle', text_anchor = 'start'))
+                elif((labels == 'numbers') and ((y2 - y1) >= 9)):
+                    p = draw.Line(greater(x2,x3)+5, (y2+y1)/2,
+                                  greater(x2,x3)+100, (y2+y1)/2,
+                                  stroke_width = 0, fill = 'none')
+                    d.append(draw.Text(f'{i}', 9,
+                                       path = p, valign='middle', text_anchor = 'start'))
+            # Just label everything
+            else:
+                if(labels == 'facies'):
+                    p = draw.Line(greater(x2,x3)+5, (y2+y1)/2,
+                                  greater(x2,x3)+100, (y2+y1)/2,
+                                  stroke_width = 0, fill = 'none')
+                    d.append(draw.Text(f'{facies[i]}', 9,
+                                       path = p, valign='middle', text_anchor = 'start'))
+                elif(labels == 'numbers'):
+                    p = draw.Line(greater(x2,x3)+5, (y2+y1)/2,
+                                  greater(x2,x3)+100, (y2+y1)/2,
+                                  stroke_width = 0, fill = 'none')
+                    d.append(draw.Text(f'{i}', 9,
+                                       path = p, valign='middle', text_anchor = 'start'))
+            
         if debug is True:
             print(f'{j},{i},({x1:.3f},{y1:.3f}), ({x2:.3f},{y1:.3f}), ({x3:.3f},{y2:.3f}), ({x1:.3f},{y2:.3f}), {((colheight+orig) - y2):.3f}')
         
@@ -302,6 +374,7 @@ def drawLog(elevations, vscale,
                            x - 6, orig + t_heights[i] - (j*colheight),
                            text_anchor = 'end'))
     
+    # Write grain size bars and label with codes at bottom of scale
     for j in range(0,cols):
         for i in range(0,len(gs_codes)):
             x = (j * colspc) + orig + (j * gs_widths[len(gs_widths)-1]) + gs_widths[i]
@@ -311,18 +384,25 @@ def drawLog(elevations, vscale,
                                     fill = 'none',
                                     stroke = 'black',
                                     stroke_width = 0.5))
+                # Create vertical path to run text on
+                p = draw.Line(x+0.5, orig-16.5, x+1, orig-100,
+                               stroke_width = 0, fill='none')
                 d.append(draw.Text(f'{gs_codes[i]}', 9,
-                                   x, orig - 20,
-                                   text_anchor = 'center'))
+                                   path=p,
+                                   text_anchor = 'start',
+                                   valign = 'middle'))
             else:
                d.append(draw.Lines(x, orig,
                                    x, orig - 5,
                                    fill = 'none',
                                    stroke = 'black',
                                    stroke_width = 0.5))
+               p = draw.Line(x+0.5, orig-6.5, x+1, orig-100,
+                               stroke_width = 0, fill='none')
                d.append(draw.Text(f'{gs_codes[i]}', 9,
-                                  x, orig-10,
-                                  text_anchor = 'center'))
+                                  path=p,
+                                  text_anchor = 'start',
+                                  valign = 'middle'))
         
         x = (j * colspc) + orig + (j * gs_widths[len(gs_widths)-1]) + gs_widths[len(gs_widths)-1]
         d.append(draw.Lines(x,orig,

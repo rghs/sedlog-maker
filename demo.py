@@ -25,8 +25,7 @@ can = dr.canvas()
 x = dr.drawLog(el, 500, src.gs_base, src.gs_top, src.code,
                gs_codes, gs_widths,
                f_codes, f_colors, can, ticks = 10,
-               man_colheight = 120, 
-               columns = 325,
+               man_colheight = 120, orig = 40, labels = 'numbers',
                debug = False)
 
 if export is True:
