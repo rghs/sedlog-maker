@@ -11,7 +11,6 @@ import pandas as pd
 import numpy as np
 import drawSvg as draw
 import warnings
-import math
 
 def greater(x,y):
     '''
@@ -181,7 +180,16 @@ def drawLog(elevations, vscale,
             orig = 40, pad = 5, colspc = 40, lnwgt = 0.5,
             man_colheight = None, columns = None, ticks = 20,
             labels = None, label_strat = 'polite',
-            debug = False):
+            nachar = 'NaN', debug = False):
+    # Check labels are something that makes sense
+    if isinstance(labels, (str, type(None))) is False:
+        if(hasattr(labels, '__len__')):
+            labels = np.asarray(labels)
+        else:
+            laberr = 'labels accepts either an array-like, "numbers" or "facies". None of these were detected so no labels are being printed.'
+            warnings.warn(laberr)
+            labels = None
+    
     # Figure out page spacing
     if man_colheight is None:
         colheight = canv.height-(orig + pad)
@@ -199,7 +207,7 @@ def drawLog(elevations, vscale,
     t_len = (elevations[len(elevations)-1] * 1000 * 2.8346456692913)/vscale #vscale * 2.8346456692913 * elevations[len(elevations)-1]
     if(columns is None):
         # Calculate the minimum number of columns needed to fit log if no value is passed
-        columns = math.ceil(t_len/colheight)
+        columns = int(np.ceil(t_len/colheight))
     avail_len = pd.Series(np.array(list(range(1,columns + 1))) * colheight)
     if(pd.isna(avail_len[avail_len>t_len].index.min()) is True):
         error = '\n'.join((f'Not sufficient vertical space with {columns} columns and vertical scale of {vscale}:1.',
@@ -208,7 +216,7 @@ def drawLog(elevations, vscale,
                         f'Total length of log (pt) = {t_len}',
                         f'Individual column height (pt) = {colheight}',
                         f'Excess height (pt) = {t_len - max(avail_len)}',
-                        f'Minimum columns needed = {math.ceil(t_len/colheight)}'))
+                        f'Minimum columns needed = {int(np.ceil(t_len/colheight))}'))
         raise Exception(error)
     else:
         # Reduce provided number of columns to minimum needed
@@ -273,7 +281,7 @@ def drawLog(elevations, vscale,
                                 stroke_width = lnwgt,
                                 clip_path = clip))
             # Draw labels on whichever section is biggest
-            if(labels == 'facies') or (labels == 'numbers'):
+            if labels is not None:
                 if(((y2 + ((colheight+orig) - y2)) - y1) > y2b-orig):
                     lx = greater(x2, x3) + 5
                     ly = (y1 + (y2 + ((colheight+orig) - y2)))/2
@@ -282,33 +290,41 @@ def drawLog(elevations, vscale,
                     lx = greater(x2b, x3b) + 5
                     ly = (y2b+(orig))/2
                     ldelta = y2b - orig
-            # Draw labels on complete boxes
-            if(label_strat == 'polite'):
-                if((labels == 'facies') and (ldelta >= 9)):
+            # Draw labels on boxes that are big enough
+                if((label_strat == 'polite') and (ldelta >= 9)):
                     p = draw.Line(lx, ly,
                                   lx+100, ly,
                                   stroke_width = 0, fill = 'none')
-                    d.append(draw.Text(f'{facies[i]}', 9,
-                                       path = p, valign='middle', text_anchor = 'start'))
-                elif((labels == 'numbers') and (ldelta >= 9)):
-                    p = draw.Line(lx, ly,
-                                  lx+100, ly,
-                                  stroke_width = 0, fill = 'none')
-                    d.append(draw.Text(f'{i}', 9,
-                                       path = p, valign='middle', text_anchor = 'start'))
+                    try:
+                        if(labels == 'facies'):
+                            d.append(draw.Text(f'{facies[i]}', 9,
+                                               path = p, valign='middle', text_anchor = 'start'))
+                        elif(labels == 'numbers'):
+                            d.append(draw.Text(f'{i}', 9,
+                                               path = p, valign='middle', text_anchor = 'start'))
+                        else:
+                            raise Exception()
+                    except:
+                        if(labels[i] is not nachar):
+                            d.append(draw.Text(f'{labels[i]}', 9,
+                                           path = p, valign='middle', text_anchor = 'start'))
             # Just label everything
-            else:
-                if(labels == 'facies'):
-                    p = draw.Line(greater(x2,x3)+5, (y2+y1)/2,
-                                  greater(x2,x3)+100, (y2+y1)/2,
-                                  stroke_width = 0, fill = 'none')
-                    d.append(draw.Text(f'{facies[i]}', 9,
-                                       path = p, valign='middle', text_anchor = 'start'))
-                elif(labels == 'numbers'):
-                    p = draw.Line(greater(x2,x3)+5, (y2+y1)/2,
-                                  greater(x2,x3)+100, (y2+y1)/2,
-                                  stroke_width = 0, fill = 'none')
-                    d.append(draw.Text(f'{i}', 9,
+        elif(label_strat != 'polite'):
+                p = draw.Line(lx, ly,
+                              lx+100, ly,
+                              stroke_width = 0, fill = 'none')
+                try:
+                    if(labels == 'facies'):
+                        d.append(draw.Text(f'{facies[i]}', 9,
+                                           path = p, valign='middle', text_anchor = 'start'))
+                    elif(labels == 'numbers'):
+                        d.append(draw.Text(f'{i}', 9,
+                                           path = p, valign='middle', text_anchor = 'start'))
+                    else:
+                        raise Exception()
+                except:
+                    if(labels[i] is not nachar):
+                        d.append(draw.Text(f'{labels[i]}', 9,
                                        path = p, valign='middle', text_anchor = 'start'))
             
         # Draw boxes that aren't split
@@ -323,40 +339,52 @@ def drawLog(elevations, vscale,
                                 stroke_width = lnwgt))
             
             # Label units
+            if labels is not None:
             # Make labels appear only on units that are thick enough
-            if(label_strat == 'polite'):
-                if((labels == 'facies') and ((y2 - y1) >= 9)):
+                if((label_strat == 'polite') and ((y2 - y1) >= 9)):
+                    if debug is True:
+                        print(f'Politely labelling unit {i}...')
                     p = draw.Line(greater(x2,x3)+5, (y2+y1)/2,
                                   greater(x2,x3)+100, (y2+y1)/2,
                                   stroke_width = 0, fill = 'none')
-                    d.append(draw.Text(f'{facies[i]}', 9,
-                                       path = p, valign='middle', text_anchor = 'start'))
-                elif((labels == 'numbers') and ((y2 - y1) >= 9)):
+                    try:
+                        if(labels == 'facies'):
+                            d.append(draw.Text(f'{facies[i]}', 9,
+                                               path = p, valign='middle', text_anchor = 'start'))
+                        elif(labels == 'numbers'):
+                            d.append(draw.Text(f'{i}', 9,
+                                               path = p, valign='middle', text_anchor = 'start'))
+                        else:
+                            # This is horrible and probably has unforseen consqeuences but it works for now 0_0
+                            raise Exception()
+                    except:
+                        if(labels[i] is not nachar):
+                            d.append(draw.Text(f'{labels[i]}', 9,
+                                           path = p, valign='middle', text_anchor = 'start'))
+                # Just label everything
+                elif(label_strat != 'polite'):
                     p = draw.Line(greater(x2,x3)+5, (y2+y1)/2,
                                   greater(x2,x3)+100, (y2+y1)/2,
                                   stroke_width = 0, fill = 'none')
-                    d.append(draw.Text(f'{i}', 9,
-                                       path = p, valign='middle', text_anchor = 'start'))
-            # Just label everything
-            else:
-                if(labels == 'facies'):
-                    p = draw.Line(greater(x2,x3)+5, (y2+y1)/2,
-                                  greater(x2,x3)+100, (y2+y1)/2,
-                                  stroke_width = 0, fill = 'none')
-                    d.append(draw.Text(f'{facies[i]}', 9,
-                                       path = p, valign='middle', text_anchor = 'start'))
-                elif(labels == 'numbers'):
-                    p = draw.Line(greater(x2,x3)+5, (y2+y1)/2,
-                                  greater(x2,x3)+100, (y2+y1)/2,
-                                  stroke_width = 0, fill = 'none')
-                    d.append(draw.Text(f'{i}', 9,
-                                       path = p, valign='middle', text_anchor = 'start'))
+                    try:
+                        if(labels == 'facies'):
+                            d.append(draw.Text(f'{facies[i]}', 9,
+                                               path = p, valign='middle', text_anchor = 'start'))
+                        elif(labels == 'numbers'):
+                            d.append(draw.Text(f'{i}', 9,
+                                               path = p, valign='middle', text_anchor = 'start'))
+                        else:
+                            raise Exception()
+                    except:
+                        if(labels[i] is not nachar):
+                            d.append(draw.Text(f'{labels[i]}', 9,
+                                           path = p, valign='middle', text_anchor = 'start'))
             
         if debug is True:
             print(f'{j},{i},({x1:.3f},{y1:.3f}), ({x2:.3f},{y1:.3f}), ({x3:.3f},{y2:.3f}), ({x1:.3f},{y2:.3f}), {((colheight+orig) - y2):.3f}')
         
     # Draw scale
-    nticks = math.floor((cols * colheight)/((ticks * 1000 * 2.8346456692913)/vscale) + 1)
+    nticks = int(np.floor((cols * colheight)/((ticks * 1000 * 2.8346456692913)/vscale) + 1))
     t_heights = np.array(range(0,nticks)) * ((ticks * 1000 * 2.8346456692913)/vscale)
     
     j = 0
