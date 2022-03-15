@@ -309,7 +309,7 @@ def drawLog(elevations, vscale,
                             d.append(draw.Text(f'{labels[i]}', 9,
                                            path = p, valign='middle', text_anchor = 'start'))
             # Just label everything
-        elif(label_strat != 'polite'):
+            elif(label_strat != 'polite'):
                 p = draw.Line(lx, ly,
                               lx+100, ly,
                               stroke_width = 0, fill = 'none')
