@@ -12,6 +12,8 @@ import numpy as np
 import drawSvg as draw
 import warnings
 
+#%% Basic supporting functions
+
 def greater(x,y):
     '''
     Returns greater of two numbers entered. Accepts floats and ints.
@@ -21,6 +23,8 @@ def greater(x,y):
         return x
     else:
         return y
+
+#%% Setup functions
 
 def grainsize(sizes = None, width = None, wunit = 'mm'):
     '''
@@ -45,10 +49,13 @@ def grainsize(sizes = None, width = None, wunit = 'mm'):
         Series containing widths for grain sizes in pt.
 
     '''
+    # Errors for bad input
     if(wunit not in  ['mm','in','pt']):
         raise Exception('Width unit must be either "mm","in" or "pt".')
     if((sizes is None) and (width is not None)) or ((sizes is not None) and (width is None)):
         raise Exception('Both sizes and widths must be provided if custom categories are being used.')
+    
+    # Default lookup
     elif(sizes is None and width is None):
         grain = np.array(("NaN",
                           "cl","si",
@@ -59,8 +66,12 @@ def grainsize(sizes = None, width = None, wunit = 'mm'):
                           0.4, 0.45, 0.5, 0.55, 0.6,
                           0.7, 0.8, 0.9, 1.0))
         widths *= 75
+        
+    # Here be dragons if you only give 1 grainsize
     elif((hasattr(sizes, '__len__') is False) or (hasattr(width, '__len__') is False)):
         warnings.warn('Either length or sizes has no length attribute. This means that you have provided only one category in either. This is likely to produce very strange behaviour and should be reconsidered.')
+    
+    # Unit conversion for custom grainsize arrays
     else:
         if(len(sizes) != len(width)):
             raise Exception('Sizes and widths must be of identical length.')
@@ -133,6 +144,20 @@ def faciesList(codes = None, colors = None):
     return fcodes, fcolors
 
 def elevs(thicknesses):
+    '''
+    Converts unit thicknesses into absolute elevations from base of log.
+
+    Parameters
+    ----------
+    thicknesses : array-like
+        Array containing thicknesses of units in log.
+
+    Returns
+    -------
+    elevation : pd.Series
+        Pandas Series containing elevation values for each unit.
+
+    '''
     if(hasattr(thicknesses, '__len__') is False):
         ex = '\n'.join(('Thicknesses data has no length attribute, meaning only one thickness reading was provided.',
               f'Provided thicknesses: {thicknesses}'))
@@ -149,17 +174,47 @@ def elevs(thicknesses):
     elevation = pd.Series(elevation)
     return elevation
 
-def canvas(width = 0, height = 0, standard = 'letter'):
+def canvas(width = None, height = None, standard = 'letter'):
+    '''
+    Creates a canvas for the drawing, with options for several standard paper
+    sizes in both American and European flavours.
+    
+    Function will prioritise values manually entered over the standard string,
+    unless both are left as default, in which case a standard size will be
+    selected.
+
+    Parameters
+    ----------
+    width : float, optional
+        Width of canvas in mm. The default is None.
+    height : float, optional
+        Height of canvas in mm. The default is None.
+    standard : string, optional
+        String specifying standard paper size. The default is 'letter'.
+        Available options are as follows:
+            - letter
+            - legal
+            - tabloid
+            - a3
+            - a4
+            - a5
+
+    Returns
+    -------
+    canvas : drawSvg object
+        drawSvg canvas for log to be drawn onto.
+
+    '''
     sheets = pd.Series(['letter', 'legal', 'tabloid',
                        'a3', 'a4', 'a5'])
-    if((width == 0) and (height == 0) and (standard in sheets.values)):
+    if((width is None) and (height is None) and (standard in sheets.values)):
         stdw = np.array([215.9, 215.9, 279.4,
                          297, 210, 148])
         stdh = np.array([279.4, 355.6, 431.8,
                          420, 297, 210])
         cw = stdw[sheets[sheets == standard].index[0]]
         ch = stdh[sheets[sheets == standard].index[0]]
-    elif((width > 0) and (height > 0)):
+    elif(isinstance(width,(float,int)) and isinstance(height,(float,int))):
         cw = width
         ch = height
     else:
@@ -173,6 +228,51 @@ def canvas(width = 0, height = 0, standard = 'letter'):
     canvas = draw.Drawing(cw, ch, origin = (0,0), displayInline = False)
     
     return canvas
+
+#%% Drawing functions
+
+def drawKey(fcodes, fcolors,
+            box_size = 40, custom_rows = None,
+            padding = 5):
+    if custom_rows == 'default':
+        custom_rows = [2,5,5,7,2,5]
+    if custom_rows is None:
+        cw = box_size * 2 + padding * 2
+        ch = box_size * len(fcodes) + padding * (len(fcodes)+1)
+    else:
+        # Check that custom rows matches length of fcodes
+        if(len(fcodes) != sum(custom_rows)):
+            raise Exception(f'Custom rows must sum to length of fcodes. len(fcodes) = {len(fcodes)}, sum(custom_rows) = {sum(custom_rows)}')
+        cw = max(custom_rows) * box_size + max(custom_rows) * padding + box_size*2
+        ch = len(custom_rows) * box_size + (len(custom_rows)+1) * padding
+        
+    d = draw.Drawing(cw, ch, origin = (0,0), displayInline = False)
+    
+    if custom_rows is None:
+        for i in range(0,len(fcodes)):
+            d.append(draw.Rectangle(padding, ch-padding*(i+1)-box_size*(i+1),
+                                    box_size, box_size,
+                                    fill=fcolors[fcodes[fcodes == fcodes[i]].index[0]],
+                                    stroke_width = 1, stroke='black'))
+            d.append(draw.Text(fcodes[i], 10,
+                               x = 2*padding + box_size,
+                               y = ch-padding*(i+1)-box_size*(i+1) + box_size/2))
+    else:
+        box = 0
+        for j in range(0,len(custom_rows)):
+            for i in range(0,custom_rows[j]):
+                d.append(draw.Rectangle(padding*(i+1) + box_size*(i),
+                                        ch-padding*(j+1)-box_size*(j+1),
+                                        box_size, box_size,
+                                        fill=fcolors[fcodes[fcodes == fcodes[box]].index[0]],
+                                        stroke_width = 1, stroke='black'))
+                box += 1
+            row_label = ', '.join(fcodes[sum(custom_rows[0:j]):sum(custom_rows[0:j])+custom_rows[j]])
+            d.append(draw.Text(row_label, 10,
+                               x = padding*(i+1) + box_size*(i+1) + padding,
+                               y = ch-padding*(j+1)-box_size*(j+1) + box_size/2))
+    return d
+    
 
 def drawLog(elevations, vscale,
             grain_base, grain_top, facies,
@@ -193,7 +293,7 @@ def drawLog(elevations, vscale,
     # Figure out page spacing
     if man_colheight is None:
         colheight = canv.height-(orig + pad)
-    elif(isinstance(man_colheight, int) or isinstance(man_colheight, float)):
+    elif(isinstance(man_colheight, (int, float))):
         colheight = (man_colheight * 1000 * 2.8346456692913)/vscale
         if(colheight > canv.height-(orig + pad)):
             err = '\n'.join(('Column height exceeds page height. Produced log will hang off page.',
@@ -280,7 +380,7 @@ def drawLog(elevations, vscale,
                                 stroke = 'black',
                                 stroke_width = lnwgt,
                                 clip_path = clip))
-            # Draw labels on whichever section is biggest
+            # Draw labels on whichever section of split boxes is biggest
             if labels is not None:
                 if(((y2 + ((colheight+orig) - y2)) - y1) > y2b-orig):
                     lx = greater(x2, x3) + 5

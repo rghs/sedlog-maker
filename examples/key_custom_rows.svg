@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="395" height="275" viewBox="0 -275 395 275">
+<defs>
+</defs>
+<rect x="5" y="-270" width="40" height="40" fill="#FFFFFF" stroke-width="1" stroke="black" />
+<rect x="50" y="-270" width="40" height="40" fill="#FFFFFF" stroke-width="1" stroke="black" />
+<text x="95" y="-250.0" font-size="10" dy="0em">inaccessible, cov</text>
+<rect x="5" y="-225" width="40" height="40" fill="#5A4854" stroke-width="1" stroke="black" />
+<rect x="50" y="-225" width="40" height="40" fill="#74576A" stroke-width="1" stroke="black" />
+<rect x="95" y="-225" width="40" height="40" fill="#8C627E" stroke-width="1" stroke="black" />
+<rect x="140" y="-225" width="40" height="40" fill="#A57093" stroke-width="1" stroke="black" />
+<rect x="185" y="-225" width="40" height="40" fill="#D998C1" stroke-width="1" stroke="black" />
+<text x="230" y="-205.0" font-size="10" dy="0em">fcm, fcl, fcr, fcrc, fcrw</text>
+<rect x="5" y="-180" width="40" height="40" fill="#666154" stroke-width="1" stroke="black" />
+<rect x="50" y="-180" width="40" height="40" fill="#807969" stroke-width="1" stroke="black" />
+<rect x="95" y="-180" width="40" height="40" fill="#99917D" stroke-width="1" stroke="black" />
+<rect x="140" y="-180" width="40" height="40" fill="#B3A993" stroke-width="1" stroke="black" />
+<rect x="185" y="-180" width="40" height="40" fill="#CCC1A7" stroke-width="1" stroke="black" />
+<text x="230" y="-160.0" font-size="10" dy="0em">fsm, fsl, fsr, fsrc, fsrw</text>
+<rect x="5" y="-135" width="40" height="40" fill="#E3AB4A" stroke-width="1" stroke="black" />
+<rect x="50" y="-135" width="40" height="40" fill="#DBB75C" stroke-width="1" stroke="black" />
+<rect x="95" y="-135" width="40" height="40" fill="#FDBB45" stroke-width="1" stroke="black" />
+<rect x="140" y="-135" width="40" height="40" fill="#FBB672" stroke-width="1" stroke="black" />
+<rect x="185" y="-135" width="40" height="40" fill="#FFCE6F" stroke-width="1" stroke="black" />
+<rect x="230" y="-135" width="40" height="40" fill="#EE9621" stroke-width="1" stroke="black" />
+<rect x="275" y="-135" width="40" height="40" fill="#F68C35" stroke-width="1" stroke="black" />
+<text x="320" y="-115.0" font-size="10" dy="0em">sm, sh, sp, st, sr, src, srw</text>
+<rect x="5" y="-90" width="40" height="40" fill="#99834F" stroke-width="1" stroke="black" />
+<rect x="50" y="-90" width="40" height="40" fill="#E5C376" stroke-width="1" stroke="black" />
+<text x="95" y="-70.0" font-size="10" dy="0em">gmm, gmmi</text>
+<rect x="5" y="-45" width="40" height="40" fill="#661714" stroke-width="1" stroke="black" />
+<rect x="50" y="-45" width="40" height="40" fill="#8D211D" stroke-width="1" stroke="black" />
+<rect x="95" y="-45" width="40" height="40" fill="#B22C26" stroke-width="1" stroke="black" />
+<rect x="140" y="-45" width="40" height="40" fill="#D93328" stroke-width="1" stroke="black" />
+<rect x="185" y="-45" width="40" height="40" fill="#EF4130" stroke-width="1" stroke="black" />
+<text x="230" y="-25.0" font-size="10" dy="0em">gcm, gcmi, gcp, gct, gch</text>
+</svg>

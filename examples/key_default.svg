@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="90" height="1175" viewBox="0 -1175 90 1175">
+<defs>
+</defs>
+<rect x="5" y="-1170" width="40" height="40" fill="#FFFFFF" stroke-width="1" stroke="black" />
+<text x="50" y="-1150.0" font-size="10" dy="0em">inaccessible</text>
+<rect x="5" y="-1125" width="40" height="40" fill="#FFFFFF" stroke-width="1" stroke="black" />
+<text x="50" y="-1105.0" font-size="10" dy="0em">cov</text>
+<rect x="5" y="-1080" width="40" height="40" fill="#5A4854" stroke-width="1" stroke="black" />
+<text x="50" y="-1060.0" font-size="10" dy="0em">fcm</text>
+<rect x="5" y="-1035" width="40" height="40" fill="#74576A" stroke-width="1" stroke="black" />
+<text x="50" y="-1015.0" font-size="10" dy="0em">fcl</text>
+<rect x="5" y="-990" width="40" height="40" fill="#8C627E" stroke-width="1" stroke="black" />
+<text x="50" y="-970.0" font-size="10" dy="0em">fcr</text>
+<rect x="5" y="-945" width="40" height="40" fill="#A57093" stroke-width="1" stroke="black" />
+<text x="50" y="-925.0" font-size="10" dy="0em">fcrc</text>
+<rect x="5" y="-900" width="40" height="40" fill="#D998C1" stroke-width="1" stroke="black" />
+<text x="50" y="-880.0" font-size="10" dy="0em">fcrw</text>
+<rect x="5" y="-855" width="40" height="40" fill="#666154" stroke-width="1" stroke="black" />
+<text x="50" y="-835.0" font-size="10" dy="0em">fsm</text>
+<rect x="5" y="-810" width="40" height="40" fill="#807969" stroke-width="1" stroke="black" />
+<text x="50" y="-790.0" font-size="10" dy="0em">fsl</text>
+<rect x="5" y="-765" width="40" height="40" fill="#99917D" stroke-width="1" stroke="black" />
+<text x="50" y="-745.0" font-size="10" dy="0em">fsr</text>
+<rect x="5" y="-720" width="40" height="40" fill="#B3A993" stroke-width="1" stroke="black" />
+<text x="50" y="-700.0" font-size="10" dy="0em">fsrc</text>
+<rect x="5" y="-675" width="40" height="40" fill="#CCC1A7" stroke-width="1" stroke="black" />
+<text x="50" y="-655.0" font-size="10" dy="0em">fsrw</text>
+<rect x="5" y="-630" width="40" height="40" fill="#E3AB4A" stroke-width="1" stroke="black" />
+<text x="50" y="-610.0" font-size="10" dy="0em">sm</text>
+<rect x="5" y="-585" width="40" height="40" fill="#DBB75C" stroke-width="1" stroke="black" />
+<text x="50" y="-565.0" font-size="10" dy="0em">sh</text>
+<rect x="5" y="-540" width="40" height="40" fill="#FDBB45" stroke-width="1" stroke="black" />
+<text x="50" y="-520.0" font-size="10" dy="0em">sp</text>
+<rect x="5" y="-495" width="40" height="40" fill="#FBB672" stroke-width="1" stroke="black" />
+<text x="50" y="-475.0" font-size="10" dy="0em">st</text>
+<rect x="5" y="-450" width="40" height="40" fill="#FFCE6F" stroke-width="1" stroke="black" />
+<text x="50" y="-430.0" font-size="10" dy="0em">sr</text>
+<rect x="5" y="-405" width="40" height="40" fill="#EE9621" stroke-width="1" stroke="black" />
+<text x="50" y="-385.0" font-size="10" dy="0em">src</text>
+<rect x="5" y="-360" width="40" height="40" fill="#F68C35" stroke-width="1" stroke="black" />
+<text x="50" y="-340.0" font-size="10" dy="0em">srw</text>
+<rect x="5" y="-315" width="40" height="40" fill="#99834F" stroke-width="1" stroke="black" />
+<text x="50" y="-295.0" font-size="10" dy="0em">gmm</text>
+<rect x="5" y="-270" width="40" height="40" fill="#E5C376" stroke-width="1" stroke="black" />
+<text x="50" y="-250.0" font-size="10" dy="0em">gmmi</text>
+<rect x="5" y="-225" width="40" height="40" fill="#661714" stroke-width="1" stroke="black" />
+<text x="50" y="-205.0" font-size="10" dy="0em">gcm</text>
+<rect x="5" y="-180" width="40" height="40" fill="#8D211D" stroke-width="1" stroke="black" />
+<text x="50" y="-160.0" font-size="10" dy="0em">gcmi</text>
+<rect x="5" y="-135" width="40" height="40" fill="#B22C26" stroke-width="1" stroke="black" />
+<text x="50" y="-115.0" font-size="10" dy="0em">gcp</text>
+<rect x="5" y="-90" width="40" height="40" fill="#D93328" stroke-width="1" stroke="black" />
+<text x="50" y="-70.0" font-size="10" dy="0em">gct</text>
+<rect x="5" y="-45" width="40" height="40" fill="#EF4130" stroke-width="1" stroke="black" />
+<text x="50" y="-25.0" font-size="10" dy="0em">gch</text>
+</svg>
