@@ -10,6 +10,9 @@ This program should run on any fairly basic Python installation that has Jupyter
 
 Of these, only drawSvg is likely to be missing from most Python users' installations. The package can be found here: [https://pypi.org/project/drawSvg/](https://pypi.org/project/drawSvg/)
 
+## Running
+This repo will work fastest when downloaded and run on your own machine. However, through the magic of technology, the entire thing can be run in the cloud through Binder using this link: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/rghs/sedlog-maker/HEAD?labpath=sed-log.ipynb). This performs much more slowly but you are borrowing the computing power of someone half way round the world so we can probably give them a break. Launching a Binder also takes some time to build, so please be patient and don't start refreshing your browser window.
+
 ## Basic use
 To generate a sedimentary log, run the jupyter notebook (`sed-log.ipynb`) and follow the steps within. For help on how the functions operate, for now you'll have to look to the embedded docstrings in the `drawings.py` script until I create a proper manual.
 
