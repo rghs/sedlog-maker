@@ -23,7 +23,7 @@ The `examples` directory contains two test data sets: `test_long.csv` and `test_
 The program uses several default arrays with (what I consider) sensible and commonly used facies and grain sizes. The default colour scheme also gives every facies a different colour. The idea behind this is to make them easier to mass select when tidying up the output in a program like Inkscape or Illustrator. The default arrays are as follows:
 
 ### Default facies codes
-The facies codes used here by default are an amalgam of those from Miall (1972) and DeCelles et al. (2011). See the end of the README for definitions. \
+The facies codes used here by default are an amalgam of those from Miall (1978) and DeCelles et al. (2011). See the end of the README for definitions. \
 `f_codes = ["inaccessible","cov","fcm","fcl","fcr","fcrc","fcrw","fsm","fsl","fsr","fsrc","fsrw","sm","sh","sp","st","sr","src","srw","gmm","gmmi","gcm","gcmi","gcp","gct","gch"]`
 ### Default facies colours
 Facies colours are provided as hex codes. The array is below, with an image to help those who can't visualise hex codes (which I hope is most people): \
