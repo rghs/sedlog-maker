@@ -101,10 +101,13 @@ def faciesList(codes = None, colors = None):
     Parameters
     ----------
     codes : array-like, optional
-        Contains facies codes as strings you want to use.
+        Contains facies codes you want to use as strings. The default is None.
     colors : array-like, optional
         Contains hex. The default is None.
-
+        
+    Leaving both parameters as the default value of None will return the built
+    in array of facies and colors.
+        
     Returns
     -------
     fcodes : np.ndarray
@@ -281,14 +284,94 @@ def drawLog(elevations, vscale,
             man_colheight = None, columns = None, ticks = 20,
             labels = None, label_strat = 'polite',
             nachar = 'NaN', debug = False):
+    '''
+    
+
+    Parameters
+    ----------
+    elevations : pd.Series
+        Elevations of the base and top of each unit. Can be created from thickness
+        data using the elevs() function.
+    vscale : int
+        Scale at which to draw log in form X:1.
+    grain_base : pd.Series
+        Series containing the grain size at the base of the units.
+    grain_top : pd.Series
+        Series containing the grain size at the top of the units. Can contain blank
+        cells for units with constant grain sizes.
+    facies : pd.Series
+        Series containing the facies code for each unit.
+    gs_codes : pd.Series
+        Series containing the grain size codes used in the log.
+        Can be created with the grainsize() function.
+    gs_widths : pd.Series
+        Series containing widths to draw each grain size in the log.
+        Can be created with the grainsize() function.
+    fcodes : pd.Series
+        Series containing facies codes used in the log.
+        Can be created with the faciesList() function.
+    fcolors : pd.Series
+        Series containing colors corresponding to the facies codes provided.
+        Can be created with the faciesList() function.
+    canv : drawSvg object
+        drawSvg.Drawing created with drawSvg.
+        Can be created with the canvas() function.
+    orig : int, optional
+        Coordinates (in pt) to start drawing from in form (x,x). The default is 40.
+    pad : int, optional
+        Padding (in pt) used around the edge of the page. The default is 5.
+    colspc : int, optional
+        Spacing (in pt) between the columns. The default is 40.
+    lnwgt : float, optional
+        Weight of lines (in pt) to draw around the log boxes. The default is 0.5.
+    man_colheight : float, optional
+        Manually set the height (in m) of each column drawn. The default is None.
+        If set to default, columns will be drawn to the full height of the canvas.
+    columns : int, optional
+        How many columns to draw. The default is None.
+        If left as default, the minimum number of columns necessary to accommodate
+        the log at the given vscale will be drawn.
+    ticks : float, optional
+        How often (in m) to draw ticks on the vertical axis of the log. The default is 20.
+    labels : str or pd.Series, optional
+        What to label the units with. Accepts any of the following:
+            - An array the same length as the number of units, with blank cells where units should not be labelled
+            - 'facies': labels each unit with the facies code
+            - 'number': labels each unit with its number, starting from 1 at the base
+        The default is None.
+    label_strat : str, optional
+        Chooses whether to skip drawing labels that would write over
+        units in the log ('polite') or whether to just label everything,
+        consequences be damned. The default is 'polite'.
+    nachar : str, optional
+        String specifying what blank cells contain. The default is 'NaN'.
+    debug : bool, optional
+        Provides addtional information during log construction. The default is False.
+
+    Returns
+    -------
+    d : drawSvg object
+        Completed log, ready for exporting.
+
+    '''
     # Check labels are something that makes sense
+    laberr = 'labels accepts either an array-like, "numbers" or "facies". None of these were detected so no labels are being printed.'
     if isinstance(labels, (str, type(None))) is False:
         if(hasattr(labels, '__len__')):
-            labels = np.asarray(labels)
+            if(len(labels) != len(facies)):
+                warnings.warn('labels must be of same length as facies. Setting labels to None.')
+            else:
+                if(isinstance(labels, np.ndarray) is False):
+                    labels = np.asarray(labels)
         else:
-            laberr = 'labels accepts either an array-like, "numbers" or "facies". None of these were detected so no labels are being printed.'
             warnings.warn(laberr)
             labels = None
+    elif(isinstance(labels, str)) and (labels not in ['facies', 'numbers']):
+        warnings.warn(laberr)
+        labels = None
+    # else:
+    #     warnings.warn(laberr)
+    #     labels = None
     
     # Figure out page spacing
     if man_colheight is None:
@@ -395,37 +478,29 @@ def drawLog(elevations, vscale,
                     p = draw.Line(lx, ly,
                                   lx+100, ly,
                                   stroke_width = 0, fill = 'none')
-                    try:
-                        if(labels == 'facies'):
-                            d.append(draw.Text(f'{facies[i]}', 9,
-                                               path = p, valign='middle', text_anchor = 'start'))
-                        elif(labels == 'numbers'):
-                            d.append(draw.Text(f'{i}', 9,
-                                               path = p, valign='middle', text_anchor = 'start'))
-                        else:
-                            raise Exception()
-                    except:
-                        if(labels[i] is not nachar):
-                            d.append(draw.Text(f'{labels[i]}', 9,
-                                           path = p, valign='middle', text_anchor = 'start'))
-            # Just label everything
-            elif(label_strat != 'polite'):
-                p = draw.Line(lx, ly,
-                              lx+100, ly,
-                              stroke_width = 0, fill = 'none')
-                try:
-                    if(labels == 'facies'):
+                    if(isinstance(labels, str) and (labels == 'facies')):
                         d.append(draw.Text(f'{facies[i]}', 9,
                                            path = p, valign='middle', text_anchor = 'start'))
-                    elif(labels == 'numbers'):
+                    elif(isinstance(labels, str) and (labels == 'numbers')):
                         d.append(draw.Text(f'{i}', 9,
                                            path = p, valign='middle', text_anchor = 'start'))
-                    else:
-                        raise Exception()
-                except:
-                    if(labels[i] is not nachar):
+                    elif(labels[i] is not nachar):
                         d.append(draw.Text(f'{labels[i]}', 9,
                                        path = p, valign='middle', text_anchor = 'start'))
+            # Just label everything
+                else:
+                    p = draw.Line(lx, ly,
+                                  lx+100, ly,
+                                  stroke_width = 0, fill = 'none')
+                    if(isinstance(labels, str) and (labels == 'facies')):
+                        d.append(draw.Text(f'{facies[i]}', 9,
+                                           path = p, valign='middle', text_anchor = 'start'))
+                    elif(isinstance(labels, str) and (labels == 'numbers')):
+                        d.append(draw.Text(f'{i}', 9,
+                                           path = p, valign='middle', text_anchor = 'start'))
+                    elif(labels[i] is not nachar):
+                        d.append(draw.Text(f'{labels[i]}', 9,
+                                           path = p, valign='middle', text_anchor = 'start'))
             
         # Draw boxes that aren't split
         else:
@@ -447,37 +522,28 @@ def drawLog(elevations, vscale,
                     p = draw.Line(greater(x2,x3)+5, (y2+y1)/2,
                                   greater(x2,x3)+100, (y2+y1)/2,
                                   stroke_width = 0, fill = 'none')
-                    try:
-                        if(labels == 'facies'):
-                            d.append(draw.Text(f'{facies[i]}', 9,
-                                               path = p, valign='middle', text_anchor = 'start'))
-                        elif(labels == 'numbers'):
-                            d.append(draw.Text(f'{i}', 9,
-                                               path = p, valign='middle', text_anchor = 'start'))
-                        else:
-                            # This is horrible and probably has unforseen consqeuences but it works for now 0_0
-                            raise Exception()
-                    except:
-                        if(labels[i] is not nachar):
-                            d.append(draw.Text(f'{labels[i]}', 9,
+                    if(isinstance(labels, str) and (labels == 'facies')):
+                        d.append(draw.Text(f'{facies[i]}', 9,
+                                           path = p, valign='middle', text_anchor = 'start'))
+                    elif(isinstance(labels, str) and (labels == 'numbers')):
+                        d.append(draw.Text(f'{i}', 9,
+                                           path = p, valign='middle', text_anchor = 'start'))
+                    elif(labels[i] is not nachar):
+                        d.append(draw.Text(f'{labels[i]}', 9,
                                            path = p, valign='middle', text_anchor = 'start'))
                 # Just label everything
-                elif(label_strat != 'polite'):
+                else:
                     p = draw.Line(greater(x2,x3)+5, (y2+y1)/2,
                                   greater(x2,x3)+100, (y2+y1)/2,
                                   stroke_width = 0, fill = 'none')
-                    try:
-                        if(labels == 'facies'):
-                            d.append(draw.Text(f'{facies[i]}', 9,
-                                               path = p, valign='middle', text_anchor = 'start'))
-                        elif(labels == 'numbers'):
-                            d.append(draw.Text(f'{i}', 9,
-                                               path = p, valign='middle', text_anchor = 'start'))
-                        else:
-                            raise Exception()
-                    except:
-                        if(labels[i] is not nachar):
-                            d.append(draw.Text(f'{labels[i]}', 9,
+                    if(isinstance(labels, str) and (labels == 'facies')):
+                        d.append(draw.Text(f'{facies[i]}', 9,
+                                           path = p, valign='middle', text_anchor = 'start'))
+                    elif(isinstance(labels, str) and (labels == 'numbers')):
+                        d.append(draw.Text(f'{i}', 9,
+                                           path = p, valign='middle', text_anchor = 'start'))
+                    elif(labels[i] is not nachar):
+                        d.append(draw.Text(f'{labels[i]}', 9,
                                            path = p, valign='middle', text_anchor = 'start'))
             
         if debug is True:
