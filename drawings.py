@@ -285,8 +285,9 @@ def drawLog(elevations, vscale,
             labels = None, label_strat = 'polite',
             nachar = 'NaN', debug = False):
     '''
+    Draws sedimentary logs. Accepts a dizzying array of arguments and should
+    therefore be used in conjuction with supporting functions.
     
-
     Parameters
     ----------
     elevations : pd.Series
@@ -354,6 +355,31 @@ def drawLog(elevations, vscale,
         Completed log, ready for exporting.
 
     '''
+    # Check if grain sizes are all present
+    if any(grain_base.isin(gs_codes) == False) is True:
+        idx = (grain_base.isin(gs_codes) == False)[grain_base.isin(gs_codes) == False].index
+        err = '\n'.join(['Grain sizes in log not present in list of codes prescribed. Incorrect sizes:',
+                        ', '.join(grain_base[idx]),
+                        'at indexes:',
+                        str([*idx])])
+        raise ValueError(err)
+    if any(grain_top.isin(gs_codes) == False) is True:
+        idx = (grain_top.isin(gs_codes) == False)[grain_top.isin(gs_codes) == False].index
+        err = '\n'.join(['Grain sizes in log not present in list of codes prescribed. Incorrect sizes:',
+                        ', '.join(grain_top[idx]),
+                        'at indexes:',
+                        str([*idx])])
+        raise ValueError(err)
+    
+    # Check facies are all present
+    if any(facies.isin(fcodes) == False) is True:
+        idx = (facies.isin(fcodes) == False)[facies.isin(fcodes) == False].index
+        err = '\n'.join(['Facies in log not present in list of codes facies codes. Incorrect codes:',
+                        ', '.join(facies[idx]),
+                        'at indexes:',
+                        str([*idx])])
+        raise ValueError(err)
+    
     # Check labels are something that makes sense
     laberr = 'labels accepts either an array-like, "numbers" or "facies". None of these were detected so no labels are being printed.'
     if isinstance(labels, (str, type(None))) is False:
@@ -385,7 +411,10 @@ def drawLog(elevations, vscale,
                              f'Current excess height (pt) = {((man_colheight * 1000 * 2.8346456692913)/vscale) - (canv.height-(orig + pad))}'))
             warnings.warn(err)
     else:
-        raise Exception('Manual column height must be provided as "int" or "float" dtype.')
+        mancoltype = type(man_colheight)
+        err = '\n'.join(['Manual column height must be provided as "int" or "float" dtype.',
+                        f'You provided man_colheight as {mancoltype} type.'])
+        raise TypeError(err)
     
     t_len = (elevations[len(elevations)-1] * 1000 * 2.8346456692913)/vscale #vscale * 2.8346456692913 * elevations[len(elevations)-1]
     if(columns is None):
@@ -400,7 +429,7 @@ def drawLog(elevations, vscale,
                         f'Individual column height (pt) = {colheight}',
                         f'Excess height (pt) = {t_len - max(avail_len)}',
                         f'Minimum columns needed = {int(np.ceil(t_len/colheight))}'))
-        raise Exception(error)
+        raise ValueError(error)
     else:
         # Reduce provided number of columns to minimum needed
         cols = avail_len[avail_len>t_len].index.min() + 1
