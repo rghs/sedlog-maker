@@ -6,9 +6,9 @@ This README is currently in a very basic state and will be improved when I find 
 This program should run on any fairly basic Python installation that has Jupyter available to it. The only packages the program imports are as follows:
 - Numpy
 - Pandas
-- drawSvg
+- drawSvg v1.9
 
-Of these, only drawSvg is likely to be missing from most Python users' installations. The package can be found here: [https://pypi.org/project/drawSvg/](https://pypi.org/project/drawSvg/)
+Of these, only drawSvg is likely to be missing from most Python users' installations. The package can be found here: [https://pypi.org/project/drawSvg/](https://pypi.org/project/drawSvg/) and should be installed with the command `pip install "drawSvg~=1.9"`. NOTE: Version 2+ of drawSvg inverts the y direction to be in compliance with the SVG standard of x-to-the-right, y-to-the-bottom, which makes all logs appear upside down.
 
 ## Running
 This repo will work fastest when downloaded and run on your own machine. However, through the magic of technology, the entire thing can be run in the cloud through Binder using this link: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/rghs/sedlog-maker/HEAD?labpath=sed-log.ipynb). This performs much more slowly but you are borrowing the computing power of someone half way round the world so we can probably give them a break. Launching a Binder also takes some time to build, so please be patient and don't start refreshing your browser window.
