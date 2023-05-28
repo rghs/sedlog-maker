@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 import drawSvg as draw
 import warnings
+from importlib.metadata import version
 
 #%% Basic supporting functions
 
@@ -24,6 +25,18 @@ def greater(x,y):
     else:
         return y
 
+def verify_version():
+    ver = version('drawSvg')
+    print(f'Current drawSvg version = {ver}')
+    ver = ver.rsplit('.',maxsplit=1)[0]
+    ver = float(ver)
+    if ver > 1.9:
+        print('This program was built on version 1.9. Version 2 inverted the coordinate reference system and your logs will be drawn upside down. A fix is coming for this in the future (hopefully).')
+    elif ver < 1.9:
+        print('This program was built on version 1.9. Older versions may lack functionality used here (although I\'m not aware of it).')
+    elif ver == 1.9:
+        print('You\'ve got the right version! You\'re good to go!')
+    
 #%% Setup functions
 
 def grainsize(sizes = None, width = None, wunit = 'mm'):
