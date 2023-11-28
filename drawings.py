@@ -15,6 +15,22 @@ from importlib.metadata import version
 
 #%% Basic supporting functions
 
+def convert(measurement, in_unit:str, out_unit:str):
+    units = {'pt':1,
+             'mm':2.8346456692913,
+             'in':1/72}
+
+    if in_unit not in units.keys():
+        raise ValueError(f'Given input unit ({in_unit}) not supported! Please choose one of: {units.keys()}.')
+    if out_unit not in units.keys():
+        raise ValueError(f'Given input unit ({out_unit}) not supported! Please choose one of: {units.keys()}.')
+    
+    value_in_pt = measurement * units[in_unit]
+
+    output_value = value_in_pt * 1/(units[out_unit])
+
+    return output_value
+
 def greater(x,y):
     '''
     Returns greater of two numbers entered. Accepts floats and ints.
@@ -65,11 +81,11 @@ def grainsize(sizes = None, width = None, wunit = 'mm'):
     # Errors for bad input
     if(wunit not in  ['mm','in','pt']):
         raise Exception('Width unit must be either "mm","in" or "pt".')
-    if((sizes is None) and (width is not None)) or ((sizes is not None) and (width is None)):
+    if((sizes is None) and (hasattr(width,'__len__'))) or ((sizes is not None) and (width is None)):
         raise Exception('Both sizes and widths must be provided if custom categories are being used.')
     
     # Default lookup
-    elif(sizes is None and width is None):
+    elif(sizes is None):
         grain = np.array(("NaN",
                           "cl","si",
                           "vf","f","m","c","vc",
@@ -78,7 +94,12 @@ def grainsize(sizes = None, width = None, wunit = 'mm'):
                           0.2, 0.3,
                           0.4, 0.45, 0.5, 0.55, 0.6,
                           0.7, 0.8, 0.9, 1.0))
-        widths *= 75
+        
+        if width is None:
+            widths *= 40
+        else:
+            width = convert(width,wunit,'pt')
+            widths *= width
         
     # Here be dragons if you only give 1 grainsize
     elif((hasattr(sizes, '__len__') is False) or (hasattr(width, '__len__') is False)):
@@ -94,12 +115,7 @@ def grainsize(sizes = None, width = None, wunit = 'mm'):
         if(isinstance(width, np.ndarray) is False):
             width = np.array(width)
         # Convert widths to pts
-        if(wunit == 'mm'):
-            widths = width * 2.8346456692913
-        elif(wunit == 'in'):
-            widths = width / 72
-        else:
-            widths = width
+        widths = convert(width,wunit,'pt')
             
         grain = sizes
     
