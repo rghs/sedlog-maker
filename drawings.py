@@ -9,7 +9,10 @@ Functions for sed log maker
 
 import pandas as pd
 import numpy as np
-import drawSvg as draw
+try:
+    import drawSvg as draw
+except:
+    import drawsvg as draw
 import warnings
 from importlib.metadata import version
 
@@ -166,10 +169,14 @@ def faciesList(codes = None, colors = None):
         if(len(codes) != len(colors)):
             raise Exception('Codes and colors must be of identical length.')
         # Convert lists into arrays
-        if(isinstance(codes, np.ndarray) is False):
-            fcodes = np.array(codes)
-        if(isinstance(colors, np.ndarray) is False):
-            fcolors = np.array(colors)
+        fcodes = codes
+        fcolors = colors
+        # if(isinstance(codes, np.ndarray) is False):
+        #     print('hello')
+        #     fcodes = np.array(codes)
+        # if(isinstance(colors, np.ndarray) is False):
+        #     print('hello')
+        #     fcolors = np.array(colors)
     
     fcodes = pd.Series(fcodes)
     fcolors = pd.Series(fcolors)
